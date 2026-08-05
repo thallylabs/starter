@@ -9,7 +9,7 @@ const emptySubscribe = () => () => {}
 /**
  * The site mark used across the admin chrome (sidebar workspace tile, login
  * card). Prefers the admin-uploaded logo and falls back to the bundled default
- * neutral starter mark from public/brand until the owner replaces it.
+ * brand mark (public/brand — the Thally logo until the user replaces it).
  * Theme-aware and hydration-safe: dark resolves only after mount.
  */
 export function BrandMark({ size = 30 }: { size?: number }) {

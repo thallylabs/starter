@@ -27,7 +27,7 @@ async function loadFont(requestUrl: string, path: string, name: string, weight: 
 async function buildLeafDataUri(requestUrl: string, color: string) {
   const response = await fetch(new URL('/brand/default-logo-light.svg', requestUrl))
   if (!response.ok) {
-    throw new Error('Unable to load the bundled Thally mark')
+    throw new Error('Unable to load the bundled default brand mark')
   }
 
   const svg = (await response.text()).replace(/fill="[^"]+"/, `fill="${color}"`)

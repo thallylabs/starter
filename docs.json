@@ -1,7 +1,7 @@
 {
   "theme": "default",
   "appearance": {
-    "contentIcons": "neutral"
+    "contentIcons": "accent"
   },
   "i18n": {
     "defaultLocale": "en",
@@ -23,7 +23,7 @@
       "tab": "Get started",
       "groups": [
         {
-          "group": "Start here",
+          "group": "Get started",
           "pages": ["introduction", "quickstart"]
         },
         {
