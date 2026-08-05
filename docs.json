@@ -1,0 +1,46 @@
+{
+  "theme": "default",
+  "appearance": {
+    "contentIcons": "neutral"
+  },
+  "i18n": {
+    "defaultLocale": "en",
+    "locales": [
+      {
+        "code": "en",
+        "label": "English"
+      }
+    ]
+  },
+  "navbar": {
+    "primary": {
+      "label": "Get started",
+      "href": "/quickstart"
+    }
+  },
+  "tabs": [
+    {
+      "tab": "Get started",
+      "groups": [
+        {
+          "group": "Start here",
+          "pages": ["introduction", "quickstart"]
+        },
+        {
+          "group": "Design your docs",
+          "pages": ["components", "customization"]
+        }
+      ]
+    },
+    {
+      "tab": "API Reference",
+      "api": {
+        "source": "openapi.yaml"
+      }
+    },
+    {
+      "tab": "Changelog",
+      "href": "/changelog"
+    }
+  ]
+}

@@ -1,0 +1,33 @@
+openapi: 3.1.0
+info:
+  title: Product API
+  version: 1.0.0
+  description: Replace this specification with the API your readers use.
+servers:
+  - url: https://api.example.com
+    description: Production
+tags:
+  - name: System
+    description: Service availability and version information.
+paths:
+  /health:
+    get:
+      operationId: getHealth
+      tags: [System]
+      summary: Check service health
+      description: Return the current service status.
+      responses:
+        '200':
+          description: The service is available.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    enum: [ok]
+                  version:
+                    type: string
+                    example: 1.0.0
+                required: [status]

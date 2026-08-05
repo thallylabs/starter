@@ -1,0 +1,41 @@
+# Dependencies
+/node_modules/
+/.pnp
+.pnp.*
+.yarn/*
+!.yarn/patches
+!.yarn/plugins
+!.yarn/releases
+!.yarn/versions
+
+# Tests and builds
+/coverage/
+/.next/
+/out/
+/build/
+/.open-next/
+/.thally-upload/
+/.wrangler/
+/src/generated/runtime-sources.ts
+/src/generated/runtime-docs.ts
+/src/generated/runtime-docs/
+
+# Local application data
+/.data/
+/.thally/
+/.dox/
+
+# Environment and deployment credentials
+.env*
+!.env.example
+*.pem
+/.vercel/
+
+# Logs and editor files
+*.tsbuildinfo
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.pnpm-debug.log*
+.DS_Store
+next-env.d.ts
