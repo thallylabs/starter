@@ -33,13 +33,16 @@ jobs:
       id-token: write
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
         with:
           fetch-depth: 0
-      - uses: actions/setup-node@v4
+          persist-credentials: false
+      - uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38 # v6
         with:
           node-version: 20
-      - run: npm ci
+      - run: npm ci --ignore-scripts
+      - name: Install pinned workflow tooling
+        run: npm ci --ignore-scripts --prefix .github/thally-tooling
       - name: Configure git
         run: |
           git config user.name "thally-agent"
@@ -67,8 +70,12 @@ jobs:
           if [ -n "${THALLY_PR_GRANT:-}" ]; then
             echo "::add-mask::$THALLY_PR_GRANT"
           fi
+          # checkout intentionally does not persist credentials. Configure the
+          # GitHub CLI credential helper only for this write-scoped step so
+          # both the normal --pr path and readiness-grant path can push.
+          gh auth setup-git
           run_thally() {
-            node_modules/.bin/thally "$@"
+            .github/thally-tooling/node_modules/.bin/thally "$@"
           }
           REQUESTER_ARGS=()
           if [ -n "$REQUESTER" ]; then
@@ -123,12 +130,15 @@ jobs:
     if: github.event_name == 'schedule'
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
         with:
           fetch-depth: 0
-      - uses: actions/setup-node@v4
+          persist-credentials: false
+      - uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38 # v6
         with:
           node-version: 20
-      - run: npm ci
+      - run: npm ci --ignore-scripts
+      - name: Install pinned workflow tooling
+        run: npm ci --ignore-scripts --prefix .github/thally-tooling
       - name: Check for stale docs
-        run: node_modules/.bin/thally check --drift --ci
+        run: .github/thally-tooling/node_modules/.bin/thally check --drift --ci

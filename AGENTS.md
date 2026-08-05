@@ -27,7 +27,9 @@
 - Keep page slugs stable once published.
 - Add pages to `docs.json`; do not leave useful pages orphaned.
 - Update `openapi.yaml` when API behavior changes.
-- Run `npx thally check --ci .`, `npm test`, and `npm run build` before publishing.
+- Run `npm ci --ignore-scripts --prefix .github/thally-tooling`, then
+  `.github/thally-tooling/node_modules/.bin/thally check --ci .`, `npm test`,
+  and `npm run build` before publishing.
 
 ## Product context
 

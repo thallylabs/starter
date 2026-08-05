@@ -1,5 +1,6 @@
 # Dependencies
 /node_modules/
+/.github/thally-tooling/node_modules/
 /.pnp
 .pnp.*
 .yarn/*
