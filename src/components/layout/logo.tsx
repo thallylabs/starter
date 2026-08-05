@@ -50,7 +50,9 @@ export function Logo({ className, showText = true }: LogoProps) {
       />
       {!customOk ? (
         <>
-          {/* Neutral starter mark, replaced site-wide by an admin upload above. */}
+          {/* Default brand mark (public/brand, ships with every scaffold) —
+              the Thally olive-leaf SVG, theme-aware (olive on light, pale lime
+              on dark); replaced site-wide by an admin upload above. */}
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
             src={isDark ? '/brand/default-logo-dark.svg' : '/brand/default-logo-light.svg'}
