@@ -36,7 +36,8 @@ with `markdown.enabled` when that distribution surface fits your access model.
 ```bash
 npm test
 npm run build
-npx thally check --ci .
+npm ci --ignore-scripts --prefix .github/thally-tooling
+.github/thally-tooling/node_modules/.bin/thally check --ci .
 ```
 
 ## Deploy

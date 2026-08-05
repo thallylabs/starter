@@ -1,17 +1,15 @@
 {
   "schemaVersion": 1,
-  "starterVersion": 1,
+  "starterVersion": 2,
   "repository": "thallylabs/starter",
   "defaultBranch": "main",
   "runtime": {
     "repository": "thallylabs/thally",
-    "commitSha": "f38172638cd2cc944ac9ecda19c096ce4d9b4599",
-    "treeSha": "d33ad60ad0acabee1cf950880c8bd908e83a002a"
+    "commitSha": "baf2930771baf449238bd6c68101ceb3af33ee96",
+    "treeSha": "56f8217b4da6740015e4775d2ce0aeb60bc167a0"
   },
   "packages": {
-    "@thallylabs/core": "^0.2.0",
-    "@thallylabs/cli": "0.7.0",
-    "@thallylabs/mcp": "0.9.0"
+    "@thallylabs/core": "^0.2.0"
   },
   "ownership": {
     "frameworkSyncEligible": [
@@ -36,6 +34,7 @@
       "scripts/agent-readiness.ts",
       "scripts/build-embeddings.ts",
       "scripts/build-runtime-sources.mts",
+      "scripts/check-cloudflare-worker-size.mts",
       "scripts/smoke-cloudflare.mts"
     ],
     "userOwnedNeverOverwrite": [
