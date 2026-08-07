@@ -3,6 +3,9 @@
   "appearance": {
     "contentIcons": "accent"
   },
+  "markdown": {
+    "enabled": true
+  },
   "i18n": {
     "defaultLocale": "en",
     "locales": [
@@ -33,7 +36,26 @@
       ]
     },
     {
+      "tab": "Guides",
+      "groups": [
+        {
+          "group": "Work with Thally",
+          "pages": [
+            "guides/create-a-site",
+            "guides/work-with-the-cli",
+            "guides/connect-ai-tools"
+          ]
+        }
+      ]
+    },
+    {
       "tab": "API Reference",
+      "groups": [
+        {
+          "group": "Overview",
+          "pages": ["api/introduction", "api/authentication"]
+        }
+      ],
       "api": {
         "source": "openapi.yaml"
       }
