@@ -155,3 +155,4 @@ function buildCurlCommand(method: string, url: string, headers: Record<string, s
   }
   return lines
 }
+

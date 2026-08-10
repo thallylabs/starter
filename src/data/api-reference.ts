@@ -161,3 +161,4 @@ function sortNavigationGroups(groups: Array<ApiNavigationGroup>, spec: Normalize
     return a.title.localeCompare(b.title)
   })
 }
+

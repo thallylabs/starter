@@ -62,3 +62,4 @@ export function getOpenApiSpecUrl(siteUrl = getSiteUrl()): string | null {
 
   return resolveSourceUrl(spec.source, siteUrl)
 }
+

@@ -178,3 +178,4 @@ describe('normalizeSpec', () => {
     expect(anyOperation.security[0][0].name).toBe('bearerAuth')
   })
 })
+

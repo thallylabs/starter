@@ -1,0 +1,92 @@
+name: Sync Thally runtime
+
+on:
+  workflow_dispatch:
+    inputs:
+      runtime_ref:
+        description: Runtime branch, tag, or commit to snapshot
+        required: true
+        default: main
+        type: string
+
+permissions:
+  contents: write
+  pull-requests: write
+
+concurrency:
+  group: sync-thally-runtime
+  cancel-in-progress: false
+
+jobs:
+  sync:
+    name: Generate starter snapshot
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout starter
+        uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+        with:
+          fetch-depth: 0
+          token: ${{ secrets.STARTER_SYNC_PR_TOKEN || secrets.THALLY_AGENT_TOKEN || github.token }}
+          persist-credentials: false
+
+      - name: Checkout Thally runtime
+        uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+        with:
+          repository: thallylabs/thally
+          ref: ${{ inputs.runtime_ref }}
+          path: runtime-source
+          fetch-depth: 0
+          persist-credentials: false
+
+      - name: Resolve protected runtime revision
+        id: runtime
+        shell: bash
+        run: |
+          git -C runtime-source fetch origin main --depth=1
+          runtime_sha="$(git -C runtime-source rev-parse HEAD)"
+          git -C runtime-source merge-base --is-ancestor "$runtime_sha" origin/main
+          echo "sha=$runtime_sha" >> "$GITHUB_OUTPUT"
+          echo "short_sha=${runtime_sha:0:12}" >> "$GITHUB_OUTPUT"
+
+      - name: Generate runtime snapshot
+        run: >-
+          node runtime-source/.github/scripts/starter-runtime-contract.mjs sync
+          --starter-dir .
+          --runtime-dir runtime-source
+
+      - name: Remove runtime checkout
+        run: >-
+          node -e "require('node:fs').rmSync('runtime-source',
+          { recursive: true, force: true })"
+
+      - name: Open synchronization pull request
+        shell: bash
+        env:
+          GH_TOKEN: ${{ secrets.STARTER_SYNC_PR_TOKEN || secrets.THALLY_AGENT_TOKEN || github.token }}
+          RUNTIME_SHA: ${{ steps.runtime.outputs.sha }}
+          SHORT_SHA: ${{ steps.runtime.outputs.short_sha }}
+        run: |
+          if git diff --quiet && git diff --cached --quiet; then
+            echo "Starter already matches runtime $RUNTIME_SHA."
+            exit 0
+          fi
+
+          branch="automation/runtime-${SHORT_SHA}"
+          git config user.name "thally-release-bot"
+          git config user.email "release-bot@thally.app"
+          gh auth setup-git
+          git checkout -B "$branch"
+          git add --all
+          git commit -m "chore: sync Thally runtime ${SHORT_SHA}"
+          git push --force-with-lease origin "$branch"
+
+          if gh pr view "$branch" --json url >/dev/null 2>&1; then
+            gh pr view "$branch" --json url --jq .url
+            exit 0
+          fi
+
+          gh pr create \
+            --base main \
+            --head "$branch" \
+            --title "chore: sync Thally runtime ${SHORT_SHA}" \
+            --body "Generate the standalone starter runtime snapshot from thallylabs/thally@${RUNTIME_SHA}. Runtime-owned files and provenance are verified byte-for-byte by CI."

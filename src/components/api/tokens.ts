@@ -59,3 +59,4 @@ export function getMethodToken(method: string) {
     ring: 'ring-foreground/20',
   }
 }
+

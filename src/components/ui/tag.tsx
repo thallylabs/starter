@@ -59,3 +59,4 @@ export function Tag({ children, variant = 'medium', color }: TagProps) {
     </span>
   )
 }
+

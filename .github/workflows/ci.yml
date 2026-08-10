@@ -19,7 +19,54 @@ jobs:
       - name: Checkout
         uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
         with:
+          fetch-depth: 0
           persist-credentials: false
+
+      - name: Read pinned runtime provenance
+        id: runtime
+        shell: bash
+        run: |
+          node <<'NODE'
+          const fs = require("node:fs");
+          const manifest = require("./starter-release.json");
+          if (!/^[0-9a-f]{40}$/.test(manifest.runtime?.commitSha)) {
+            throw new Error("starter-release.json has an invalid runtime commit.");
+          }
+          fs.appendFileSync(
+            process.env.GITHUB_OUTPUT,
+            `sha=${manifest.runtime.commitSha}\n`,
+          );
+          NODE
+
+      - name: Checkout pinned Thally runtime
+        uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+        with:
+          repository: thallylabs/thally
+          ref: ${{ steps.runtime.outputs.sha }}
+          path: runtime-source
+          fetch-depth: 0
+          persist-credentials: false
+
+      - name: Prove runtime revision is on protected main
+        env:
+          RUNTIME_SHA: ${{ steps.runtime.outputs.sha }}
+        run: |
+          git -C runtime-source fetch --no-tags origin main
+          test "$(git -C runtime-source rev-parse HEAD)" = "$RUNTIME_SHA"
+          git -C runtime-source merge-base --is-ancestor "$RUNTIME_SHA" origin/main
+
+      - name: Verify generated runtime snapshot
+        run: >-
+          node runtime-source/.github/scripts/starter-runtime-contract.mjs check
+          --starter-dir .
+          --runtime-dir runtime-source
+
+      # The protected runtime checkout is verification input, not part of the
+      # standalone app. Remove it before Next.js scans the workspace for types.
+      - name: Remove runtime checkout
+        run: >-
+          node -e "require('node:fs').rmSync('runtime-source',
+          { recursive: true, force: true })"
 
       - name: Set up Node
         uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38 # v6

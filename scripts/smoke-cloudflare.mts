@@ -25,20 +25,20 @@ const checks: ReadonlyArray<SmokeCheck> = [
     contentType: 'text/html',
     validateHydrationBootstrap: true,
   },
-  { name: 'guide', path: '/quickstart', contentType: 'text/html' },
+  { name: 'guide', path: '/guides/deploying', contentType: 'text/html' },
   { name: 'docs index', path: '/api/docs-index', contentType: 'application/json' },
   {
     name: 'structured document',
     path: '/api/docs/introduction?format=json',
     contentType: 'application/json',
   },
-  { name: 'search', path: '/api/search?q=quickstart', contentType: 'application/json' },
+  { name: 'search', path: '/api/search?q=Thally', contentType: 'application/json' },
   { name: 'OpenAPI', path: '/openapi.yaml' },
   { name: 'complete LLM corpus', path: '/llms-full.txt', contentType: 'text/plain' },
   { name: 'agent guidance', path: '/AGENTS.md', contentType: 'text/markdown' },
   {
     name: 'source Markdown',
-    path: '/api/docs/introduction?format=md',
+    path: '/api/markdown/introduction',
     contentType: 'text/markdown',
   },
   {
