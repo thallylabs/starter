@@ -60,3 +60,4 @@ export async function POST(request: NextRequest) {
 function shouldIncludeBody(method: string) {
   return !['GET', 'HEAD'].includes(method.toUpperCase())
 }
+

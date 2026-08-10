@@ -4,6 +4,12 @@ A production-ready documentation site built with the open-source Thally runtime.
 Use this repository as a GitHub template or clone it directly, then replace the
 starter content with documentation for your product.
 
+This is the canonical complete template consumed by Thally Cloud, the CLI, and
+the MCP server. Runtime code is authored once in
+[`thallylabs/thally`](https://github.com/thallylabs/thally), then generated into
+this repository as a pinned, byte-identical snapshot. Do not manually repeat a
+runtime fix in both repositories.
+
 ## Run locally
 
 ```bash
@@ -25,6 +31,10 @@ used automatically when 3040 is occupied.
 `starter-release.json` records the immutable starter and runtime version used
 to create the site. Keep it in the repository so `thally starter update` can
 plan framework updates without overwriting your content or portable settings.
+
+Maintainers update the generated runtime snapshot through the **Sync Thally
+runtime** workflow. CI rejects a changed pin without matching files, changed
+files without a matching pin, missing files, and stale runtime files.
 
 Content icons are neutral by default. Set `appearance.contentIcons` to `accent`
 in `docs.json`, or add `iconColor="accent"` to an individual card or tile.

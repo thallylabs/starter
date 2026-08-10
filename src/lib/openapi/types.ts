@@ -128,3 +128,4 @@ export interface NormalizedSpec {
   servers: Array<NormalizedServer>
   operations: Array<NormalizedOperation>
 }
+

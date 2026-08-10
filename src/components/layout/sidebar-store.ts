@@ -27,3 +27,4 @@ export const useSidebarCollectionsStore = create<SidebarCollectionsState>((set) 
   collections: [],
   setCollections: (collections) => set({ collections }),
 }))
+

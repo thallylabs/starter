@@ -4,3 +4,4 @@ import { useMDXComponents as useCustomComponents } from '@/components/mdx/mdx-co
 export function useMDXComponents(components: MDXComponents): MDXComponents {
   return useCustomComponents(components)
 }
+

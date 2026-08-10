@@ -12,8 +12,10 @@
  * content wins over the option. Only replacing the JavaScript engines does.
  * YAML — the documented, only supported format — is unaffected.
  *
- * `src/lib/__tests__/frontmatter.test.ts` asserts that this helper is the only
- * module in this standalone site that imports `gray-matter`.
+ * Sibling copies exist in the workspace packages that cannot import from
+ * `src/` (packages/core, packages/mcp, packages/create-thally-docs,
+ * packages/migrate). `src/lib/__tests__/frontmatter.test.ts` asserts that
+ * these helpers are the only modules in the repo importing `gray-matter`.
  */
 
 import matter from 'gray-matter'
