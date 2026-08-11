@@ -5,11 +5,11 @@
   "defaultBranch": "main",
   "runtime": {
     "repository": "thallylabs/thally",
-    "commitSha": "7a948ddff65d030a265ba33bbc21a7a362e312c3",
-    "treeSha": "8235b3ca5c64cec3a21e2d3e3839d535e42ab017"
+    "commitSha": "b7b9ea7577b1a2f3fa4e38e36ebc45d05894c912",
+    "treeSha": "2fdd36cfe63ab9e55018b4e36ac39a24865be055"
   },
   "packages": {
-    "@thallylabs/core": "^0.2.0"
+    "@thallylabs/core": "^0.2.2"
   },
   "ownership": {
     "frameworkSyncEligible": [
@@ -32,8 +32,10 @@
       "tailwind.config.ts",
       "starter-release.json",
       "scripts/agent-readiness.ts",
+      "scripts/build-cloudflare.mts",
       "scripts/build-embeddings.ts",
       "scripts/build-runtime-sources.mts",
+      "scripts/lib/**",
       "scripts/check-cloudflare-worker-size.mts",
       "scripts/smoke-cloudflare.mts"
     ],

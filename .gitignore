@@ -20,6 +20,9 @@
 /src/generated/runtime-sources.ts
 /src/generated/runtime-docs.ts
 /src/generated/runtime-docs/
+# Managed builds stage customer-authored content here for OpenNext to copy
+# into the immutable static-asset set. The source files remain authoritative.
+/public/_thally/
 
 # Local application data
 /.data/

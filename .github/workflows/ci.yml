@@ -81,9 +81,17 @@ jobs:
       - name: Test
         run: npm test
 
-      - name: Build and enforce managed Worker size
+      - name: Build managed runtime and content assets
         run: npm run build:cloudflare
         env:
+          # Managed releases keep customer-authored content in immutable
+          # static assets so the executable Worker stays constant-size as the
+          # documentation set grows. Self-hosted builds leave this unset and
+          # retain the filesystem/embedded default.
+          THALLY_CONTENT_SOURCE: assets
           # Keep the build deterministic and offline — embeddings fall back to the
           # local hash provider when no key is present.
           THALLY_SITE_URL: https://example.com
+
+      - name: Verify managed content artifact
+        run: node .github/scripts/verify-managed-content-assets.mjs
