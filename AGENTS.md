@@ -7,6 +7,11 @@ authored source for the open-source runtime and toolchain,
 `thallylabs/starter` is this complete customer-ready template, and
 `thallylabs/thally-cloud` is the private control plane.
 
+The sole production architecture authority is
+[`thally-cloud/ARCHITECTURE.md`](https://github.com/thallylabs/thally-cloud/blob/main/ARCHITECTURE.md).
+That repository is private; this file defines only starter-local ownership and
+workflow rules. Do not create another architecture document here.
+
 Runtime-owned files in this repository are a generated snapshot, not a second
 implementation. Never hand-apply a runtime fix here. Run the **Sync Thally
 runtime** workflow, review its generated pull request, and let CI prove that
@@ -15,6 +20,10 @@ the snapshot matches the exact runtime commit in `starter-release.json`.
 Before placing a feature, trace the actual creation or request path in code and
 identify the deployed artifact. Do not infer ownership from repository names
 or an outdated planning document.
+
+Package versions, scaffold releases, managed site releases, and Cloud platform
+releases are separate identities. A starter synchronization does not itself
+upgrade an existing site or move a production release pointer.
 
 ## Project boundaries
 
@@ -25,6 +34,8 @@ or an outdated planning document.
   machine-managed; do not hand-edit them.
 - Runtime changes belong in `thallylabs/thally` and arrive here only through
   the generated synchronization pull request.
+- Starter-owned seed content and portable defaults are authored here. Paid
+  service internals remain in `thallylabs/thally-cloud`.
 - Never place credentials in source files. Use `.env.local` locally and secret
   storage in the deployment platform.
 
