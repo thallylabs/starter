@@ -99,6 +99,10 @@ jobs:
         if: steps.plan.outputs.full == 'true'
         run: npm ci --ignore-scripts
 
+      - name: Test release automation contracts
+        if: steps.plan.outputs.full == 'true'
+        run: node --test .github/scripts/*.test.mjs
+
       - name: Test
         if: steps.plan.outputs.full == 'true'
         run: npm test
