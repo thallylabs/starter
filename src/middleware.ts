@@ -15,6 +15,52 @@ import { verifySession, SESSION_COOKIE } from '@/lib/auth/session'
 import { getCloudAccessConfigEdge, getManagedSiteIdEdge } from '@/lib/cloud-link/edge'
 import { isMarkdownPagesEnabled } from '@/lib/markdown-pages'
 import { createDailyVisitorKey, externalReferrerDomain } from '@/lib/analytics/identity'
+import { problemResponse } from '@/lib/http/problem'
+
+// Static API paths are known without importing the Node-only content graph.
+// Paths outside this set may still be visual API-reference pages, so browser
+// and RSC navigation bypass the JSON fallback below.
+const PUBLIC_API_PATHS = new Set([
+  '/api/access/auth',
+  '/api/agent-readiness',
+  '/api/analytics/collect',
+  '/api/brand.css',
+  '/api/chat',
+  '/api/chat-status',
+  '/api/cloud/handshake',
+  '/api/docs-index',
+  '/api/feedback',
+  '/api/mcp',
+  '/api/og',
+  '/api/search',
+  '/api/search/track',
+  '/api/site-config',
+  '/api/track/webhook',
+  '/api/try-it',
+])
+const PUBLIC_API_PREFIXES = [
+  '/api/admin/',
+  '/api/brand/',
+  '/api/docs/',
+  '/api/markdown/',
+  '/api/well-known/',
+]
+
+function isKnownApiPath(pathname: string): boolean {
+  return (
+    PUBLIC_API_PATHS.has(pathname) ||
+    PUBLIC_API_PREFIXES.some((prefix) => pathname.startsWith(prefix))
+  )
+}
+
+function isBrowserOrRscNavigation(request: NextRequest): boolean {
+  return (
+    request.headers.get('accept')?.includes('text/html') === true ||
+    request.headers.has('rsc') ||
+    request.headers.has('next-router-state-tree') ||
+    request.headers.has('next-router-prefetch')
+  )
+}
 
 function shouldTrackPath(pathname: string): boolean {
   // Admin console (pages + its own asset/nav requests) and Next internals are
@@ -77,6 +123,21 @@ function shouldTrackRequest(request: NextRequest, pathname: string): boolean {
 }
 
 /**
+ * Next's router payloads vary on request headers that shared CDNs do not
+ * consistently include in their cache key. Treat any router signal as
+ * authoritative so a stripped companion header cannot make the response look
+ * like an ordinary document.
+ */
+function isNextRouterPayloadRequest(request: NextRequest): boolean {
+  return (
+    request.headers.get('rsc') === '1' ||
+    request.headers.has('next-router-state-tree') ||
+    request.headers.has('next-router-prefetch') ||
+    request.headers.has('next-router-segment-prefetch')
+  )
+}
+
+/**
  * Public browser documents are immutable within an atomic deployment. Next.js
  * applies its own cache policy to pre-rendered RSC payloads; this helper adds
  * the equivalent long-lived CDN policy only to full HTML documents.
@@ -85,6 +146,7 @@ function isCacheableDocsPage(request: NextRequest, pathname: string, docsAccessE
   return (
     request.method === 'GET' &&
     request.headers.get('accept')?.includes('text/html') === true &&
+    !isNextRouterPayloadRequest(request) &&
     !docsAccessEnabled &&
     !pathname.startsWith('/api') &&
     !pathname.startsWith('/admin') &&
@@ -175,11 +237,11 @@ function isManagedContentCachePath(pathname: string): boolean {
  * fails open for availability, but a possibly-password-gated page must never
  * be frozen into a shared cache for a year.
  *
- * `cdnCacheable: false` sets the purge tag without a TTL. Used for the
- * agent content-negotiation rewrite: it varies on User-Agent/Accept while
- * sharing the browser URL's cache key (CDNs do not honor Vary on those), so
- * a cached agent response would poison the URL for human visitors. Agents
- * that want cached responses have URL-distinct forms (`.md`, `?format=`).
+ * `cdnCacheable: false` sets the purge tag without a TTL. Used for responses
+ * that vary on request headers a shared CDN may not honor: agent content
+ * negotiation (User-Agent/Accept) and Next router payloads (RSC/state/prefetch
+ * headers). Caching either variant under the browser pathname can poison the
+ * corresponding human document or client-side navigation.
  */
 function applyManagedContentCacheHeaders(
   response: NextResponse,
@@ -210,6 +272,14 @@ export async function middleware(request: NextRequest, event: NextFetchEvent) {
       status: 404,
       headers: { 'Cache-Control': 'private, no-store' },
     })
+  }
+  // Keep this standards-defined discovery path inside the framework-owned
+  // runtime boundary. Unlike next.config.ts, middleware is automatically
+  // eligible for safe three-way updates in existing scaffolded sites.
+  if (pathname === '/.well-known/oauth-authorization-server') {
+    const discoveryUrl = request.nextUrl.clone()
+    discoveryUrl.pathname = '/api/well-known/oauth-authorization-server'
+    return NextResponse.rewrite(discoveryUrl)
   }
   const cloudAccess = await getCloudAccessConfigEdge(request.nextUrl.origin)
   const docsAccessEnabled = isDocsAccessEnabledEdge() || cloudAccess?.access?.mode === 'password'
@@ -266,6 +336,21 @@ export async function middleware(request: NextRequest, event: NextFetchEvent) {
     !isPublicAgentEndpoint(pathname) &&
     !(await isDocsAccessGrantedEdge(request.cookies.get(DOCS_ACCESS_COOKIE)?.value, docsAccessEnabled))
   ) {
+    // API clients need a parseable authentication failure. Browser pages keep
+    // the interactive redirect below, while protected APIs avoid returning an
+    // HTML login page after an automatic redirect.
+    if (pathname.startsWith('/api/')) {
+      return problemResponse({
+        status: 401,
+        code: 'docs_access_required',
+        title: 'Documentation access required',
+        detail: 'This documentation site is password protected.',
+        resolution:
+          'Authenticate at `/access` or submit the password to `POST /api/access/auth`, then retry with the issued docs-access cookie.',
+        instance: pathname,
+        headers: { 'Cache-Control': 'private, no-store' },
+      })
+    }
     const accessUrl = request.nextUrl.clone()
     accessUrl.pathname = '/access'
     accessUrl.searchParams.set('next', pathname)
@@ -274,6 +359,24 @@ export async function middleware(request: NextRequest, event: NextFetchEvent) {
 
   if (shouldTrackRequest(request, pathname)) {
     event.waitUntil(sendAnalyticsEvent(request, pathname))
+  }
+
+  // The `/api` URL space also contains browser-rendered API-reference pages.
+  // Preserve those pages and every RSC navigation request, while ensuring a
+  // machine client never receives Next's HTML 404 for an unknown API root.
+  if (
+    pathname.startsWith('/api/') &&
+    !isKnownApiPath(pathname) &&
+    !isBrowserOrRscNavigation(request)
+  ) {
+    return problemResponse({
+      status: 404,
+      code: 'api_endpoint_not_found',
+      title: 'API endpoint not found',
+      detail: 'No public API endpoint matches this request path.',
+      resolution: 'Read `/openapi.json` for supported operations or `/api/docs-index` for published pages.',
+      instance: pathname,
+    })
   }
 
   // `.md` page mirrors rewrite to the markdown API — but /skill.md, /AGENTS.md,
@@ -356,10 +459,13 @@ export async function middleware(request: NextRequest, event: NextFetchEvent) {
     response.headers.set('CDN-Cache-Control', cdnCache)
     response.headers.set('Netlify-CDN-Cache-Control', cdnCache)
   }
-  // Full caching is safe here: RSC payload requests share doc-page pathnames
-  // but stay cache-distinct via their `_rsc` query param, and every other
-  // variant agents use is URL-distinct (`.md`, `?format=`).
-  return applyManagedContentCacheHeaders(response, pathname, contentCachePublic)
+  // Keep router payloads purgeable, but never impose a shared CDN lifetime on
+  // them. The `_rsc` query is only one part of Next's cache key; prefetch and
+  // navigation responses also vary on headers, and replaying the wrong variant
+  // can leave the page's Suspense boundary permanently empty.
+  return applyManagedContentCacheHeaders(response, pathname, contentCachePublic, {
+    cdnCacheable: !isNextRouterPayloadRequest(request),
+  })
 }
 
 export const config = {
