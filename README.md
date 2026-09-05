@@ -4,6 +4,10 @@ A production-ready documentation site built with the open-source Thally runtime.
 Use this repository as a GitHub template or clone it directly, then replace the
 starter content with documentation for your product.
 
+Thally is the product knowledge layer for software teams. This starter is its
+portable publishing foundation: your content stays in Git, and the same source
+can serve people, search engines, and AI tools.
+
 This is the canonical complete template consumed by Thally Cloud, the CLI, and
 the MCP server. Runtime code is authored once in
 [`thallylabs/thally`](https://github.com/thallylabs/thally), then generated into
