@@ -5,14 +5,15 @@
   "defaultBranch": "main",
   "runtime": {
     "repository": "thallylabs/thally",
-    "commitSha": "cef2fe3b11895cf6ce60d17177ac97200f975507",
-    "treeSha": "0edafb000e3fb477f0f2eac93e262b4c07127851"
+    "commitSha": "2c73d8c312b290598a4335ef77c9e04d8cbe1b4b",
+    "treeSha": "930c8a4974300649852769e4fcdab2798c4b3b79"
   },
   "packages": {
-    "@thallylabs/core": "^0.2.3"
+    "@thallylabs/core": "^0.2.4"
   },
   "ownership": {
     "frameworkSyncEligible": [
+      "BUILD-WARNINGS.md",
       "src/app/**",
       "src/cloud/**",
       "src/components/**",
