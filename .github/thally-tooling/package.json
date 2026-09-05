@@ -6,6 +6,6 @@
     "node": ">=20"
   },
   "dependencies": {
-    "@thallylabs/cli": "0.7.0"
+    "@thallylabs/cli": "0.8.29"
   }
 }
