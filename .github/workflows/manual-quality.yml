@@ -13,6 +13,9 @@ on:
           - lint
           - core-web-vitals
 
+permissions:
+  contents: read
+
 # Manual checks for diagnostics that are useful but too slow or noisy to gate
 # every pull request. Select a branch in the Actions UI before starting a run.
 jobs:

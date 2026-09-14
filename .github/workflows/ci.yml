@@ -87,7 +87,11 @@ jobs:
         with:
           # Wrangler 4.111+ requires Node 22 for the exact dry-run package gate.
           node-version: 22
-          cache: npm
+
+      # Do not enable setup-node's shared dependency cache here. Pull requests
+      # execute repository-controlled install, test, and build commands; letting
+      # those runs save a cache that a trusted main-branch job may later restore
+      # creates a cross-trust cache-poisoning path.
 
       - name: Install pinned content tooling
         run: npm ci --ignore-scripts --prefix .github/thally-tooling
