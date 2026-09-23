@@ -129,7 +129,9 @@ jobs:
         run: node .github/scripts/verify-managed-content-assets.mjs
 
       - name: Smoke generated Worker routes
-        if: steps.plan.outputs.full == 'true'
+        # PR cache scope cannot write to the default branch; manual dispatches
+        # can, so keep untrusted preview execution inside the PR release gate.
+        if: steps.plan.outputs.full == 'true' && github.event_name == 'pull_request'
         run: npm run smoke:cloudflare
         env:
           THALLY_CONTENT_SOURCE: assets
