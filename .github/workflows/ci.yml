@@ -127,3 +127,9 @@ jobs:
       - name: Verify managed content artifact
         if: steps.plan.outputs.full == 'true'
         run: node .github/scripts/verify-managed-content-assets.mjs
+
+      - name: Smoke generated Worker routes
+        if: steps.plan.outputs.full == 'true'
+        run: npm run smoke:cloudflare
+        env:
+          THALLY_CONTENT_SOURCE: assets
