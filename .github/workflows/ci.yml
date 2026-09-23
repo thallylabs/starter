@@ -7,7 +7,6 @@ on:
   pull_request:
     branches: [main]
   merge_group:
-  workflow_dispatch:
 
 # Cancel superseded runs on the same ref to save CI minutes.
 concurrency:
@@ -127,3 +126,11 @@ jobs:
       - name: Verify managed content artifact
         if: steps.plan.outputs.full == 'true'
         run: node .github/scripts/verify-managed-content-assets.mjs
+
+      - name: Smoke generated Worker routes
+        # Run untrusted preview code only under pull-request cache scope; the
+        # verified PR, not a manual default-branch run, is the release gate.
+        if: steps.plan.outputs.full == 'true' && github.event_name == 'pull_request'
+        run: npm run smoke:cloudflare
+        env:
+          THALLY_CONTENT_SOURCE: assets
