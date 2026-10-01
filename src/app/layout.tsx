@@ -1,3 +1,4 @@
+/* eslint-disable @next/next/no-css-tags -- docs.json selects local CSS at runtime. */
 import type { Metadata } from 'next'
 import { Inter, JetBrains_Mono } from 'next/font/google'
 import Script from 'next/script'
@@ -10,6 +11,8 @@ import {
   getContentIconTone,
   getCustomScriptsConfig,
   getFontsConfig,
+  getStylesheetsConfig,
+  getIntegrationsConfig,
   getStructuralTheme,
 } from '@/data/docs'
 import { getBuildIconLibrary } from '@/lib/cloud-link/icon-library'
@@ -19,7 +22,8 @@ import { buildOgImageUrl } from '@/lib/og'
 import { buildSiteJsonLd } from '@/lib/json-ld'
 import { getSiteUrl } from '@/lib/site-url'
 import { JsonLdScript } from '@/components/seo/json-ld-script'
-import { AnalyticsProvider } from '@/components/analytics/analytics-provider'
+import { AnalyticsProvider, GtmNoScript } from '@/components/analytics/analytics-provider'
+import { resolveAnalyticsConfig } from '@/lib/analytics-config'
 import { SiteBanner } from '@/components/layout/site-banner'
 import { WebMcpTools } from '@/components/agent/web-mcp-tools'
 import { CloudHandshake } from '@/components/cloud/cloud-handshake'
@@ -251,6 +255,8 @@ export default async function RootLayout({ children }: Readonly<{ children: Reac
   const themeVars = THEME_VARS[structuralTheme] ?? ''
   const bannerConfig = getBannerConfig()
   const customScripts = getCustomScriptsConfig()
+  const stylesheets = getStylesheetsConfig()
+  const analyticsConfig = resolveAnalyticsConfig(siteConfig.analytics, getIntegrationsConfig())
   const i18n = await getEffectiveI18nConfig()
   const effectiveSite = resolveBuildSiteConfig()
   const siteUrl = getSiteUrl()
@@ -303,10 +309,11 @@ export default async function RootLayout({ children }: Readonly<{ children: Reac
         {/* CSS variable overrides for structural theme (radius, sidebar, nav tabs) */}
         {themeVars && <style>{`:root { ${themeVars} }`}</style>}
         {/* Live admin branding override (theme + accent from the dashboard) — last so it wins */}
-        {/* eslint-disable-next-line @next/next/no-head-element */}
         <link rel="stylesheet" href="/api/brand.css" />
+        {stylesheets.map((href) => <link key={href} rel="stylesheet" href={href} />)}
       </head>
       <body className="min-h-screen bg-background font-sans text-foreground antialiased">
+        <GtmNoScript config={analyticsConfig} />
         {bannerConfig && (
           <SiteBanner
             banner={bannerConfig}
@@ -316,7 +323,7 @@ export default async function RootLayout({ children }: Readonly<{ children: Reac
         )}
         <Providers appearance={appearance}>{children}</Providers>
         <CloudHandshake />
-        {siteConfig.analytics && <AnalyticsProvider />}
+        <AnalyticsProvider config={analyticsConfig} />
         <WebMcpTools />
         {customScripts.map((script) => (
           <Script key={script.src} src={script.src} strategy={script.strategy ?? 'afterInteractive'} />
