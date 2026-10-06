@@ -5,8 +5,8 @@
   "defaultBranch": "main",
   "runtime": {
     "repository": "thallylabs/thally",
-    "commitSha": "46afd8f23a2768b4cf745d58eb64079207bcd2a4",
-    "treeSha": "4c3ccf148bff52cb523af663743ffaa98c634ab4"
+    "commitSha": "e8e90bb6f50197bac47c061f553fa2365af7e1e9",
+    "treeSha": "17ce7a8447626af290868fa9e2c644909493d98b"
   },
   "packages": {
     "@thallylabs/core": "^0.2.11"
@@ -25,6 +25,7 @@
       "src/lib/**",
       "src/mdx/rehype.ts",
       "src/mdx/rehype.test.ts",
+      "src/mdx/__tests__/test-html.ts",
       "src/mdx/remark.ts",
       "src/mdx/snippet-registry.ts",
       "src/styles/**",
