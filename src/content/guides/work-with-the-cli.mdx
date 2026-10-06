@@ -3,7 +3,9 @@ title: Work with the CLI
 description: The thally commands you will actually use day to day.
 ---
 
-Install once, then run every command from the repository root:
+This site includes the CLI as a dev dependency, so after `npm install` you can
+run every command from the repository root with `npx`, for example
+`npx thally dev`. To type `thally` directly, install it globally:
 
 ```bash
 npm install --global @thallylabs/cli
@@ -18,7 +20,9 @@ npm install --global @thallylabs/cli
     ```
 
     Serves the site with search, agent endpoints, and the API playground
-    live, so what you review locally is what readers get.
+    live, so what you review locally is what readers get. Once it is ready,
+    it prints the local `/llms.txt` and `/api/mcp` URLs and a
+    `claude mcp add` command for connecting Claude Code.
   </Step>
   <Step title="Add a page">
     ```bash
@@ -59,4 +63,4 @@ thally --help
 
 Translation (`thally translate`), migration (`thally migrate`), deployment
 (`thally deploy`), and starter updates (`thally starter update`) each print
-their own usage.
+their own usage with `--help`.

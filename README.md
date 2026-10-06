@@ -25,11 +25,17 @@ than treating the mutable `main` branch as a release identity.
 
 ```bash
 npm install
-npm run dev
+npx thally dev
 ```
 
 Open [http://localhost:3040](http://localhost:3040). The next available port is
-used automatically when 3040 is occupied.
+used automatically when 3040 is occupied. `npm run dev` starts the same server.
+
+The `thally` CLI is a dev dependency of this site. Once the preview is ready,
+`thally dev` prints the local agent endpoints (`/llms.txt`, `/api/mcp`) and a
+`claude mcp add --transport http` command for connecting Claude Code. Run
+`npx thally --help` for the other commands, such as `thally new`,
+`thally check`, and `thally deploy`.
 
 ## Make it yours
 
@@ -61,11 +67,14 @@ with `markdown.enabled` when that distribution surface fits your access model.
 ## Validate changes
 
 ```bash
+npx thally check
 npm test
 npm run build
-npm ci --ignore-scripts --prefix .github/thally-tooling
-.github/thally-tooling/node_modules/.bin/thally check --ci .
 ```
+
+CI runs the same content check with the pinned workflow tooling:
+`npm ci --ignore-scripts --prefix .github/thally-tooling`, then
+`.github/thally-tooling/node_modules/.bin/thally check --ci .`.
 
 ## Deploy
 
@@ -77,6 +86,10 @@ Thally Cloud publishes an immutable managed site release and activates it by
 moving the site's production pointer only after validation. Direct hosts use
 their own release and rollback mechanisms; publishing a package or synchronizing
 this starter does not move an existing site's pointer.
+
+On Vercel, the site URL used for canonical and agent links is detected
+automatically. On other hosts, for a custom domain, or on Cloudflare Workers,
+set `THALLY_SITE_URL` in your host's environment.
 
 Copy `.env.example` to `.env.local` only when you need optional services. Never
 commit real credentials.
