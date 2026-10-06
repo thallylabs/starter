@@ -153,6 +153,14 @@ describe('documentation visual system', () => {
     expect(withoutEyebrow).not.toContain('thally-docs-eyebrow')
   })
 
+  it('stacks the copy action under the title on small screens', () => {
+    const doc = { id: 'a', title: 'Single Sign-On', description: 'd', href: '/a' } as DocEntry
+    const markup = renderToStaticMarkup(createElement(DocHeader, { doc }))
+    expect(markup).toContain('flex-col')
+    expect(markup).toContain('sm:flex-row')
+    expect(markup).not.toMatch(/class="flex items-start justify-between/)
+  })
+
   it('can remove the copy action without removing the document header', () => {
     const doc = {
       id: 'guides/writing-content',
@@ -200,7 +208,7 @@ describe('documentation visual system', () => {
     expect(markup).not.toContain('bg-primary')
   })
 
-  it('suppresses a group heading that repeats the tab label', () => {
+  it('omits repeated collection headings beneath tabs while preserving groups and links', () => {
     const markup = renderToStaticMarkup(
       createElement(Sidebar, {
         title: 'Get started',
@@ -217,9 +225,11 @@ describe('documentation visual system', () => {
       }),
     )
 
-    // The tab heading renders once; the identical group heading does not.
-    expect(markup.split('Get started').length - 1).toBe(1)
+    // The header tab supplies the collection label; the sidebar starts at its links.
+    expect(markup).not.toContain('Get started')
     expect(markup).toContain('Design your docs')
+    expect(markup).toContain('href="/"')
+    expect(markup).toContain('href="/components"')
   })
 
   it('renders a rail-free sidebar with a visible current-page state', () => {
