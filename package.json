@@ -24,6 +24,7 @@
     "pretest": "npm run runtime-sources:build",
     "test": "vitest run",
     "check:agents": "tsx scripts/agent-readiness.ts",
+    "reader-token": "tsx scripts/mint-reader-token.ts",
     "runtime-sources:build": "tsx scripts/build-runtime-sources.mts"
   },
   "dependencies": {
