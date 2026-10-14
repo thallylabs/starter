@@ -7,6 +7,12 @@ on:
   pull_request:
     branches: [main]
   merge_group:
+  workflow_dispatch:
+    inputs:
+      base_sha:
+        description: Exact base commit for an automated framework update PR
+        required: true
+        type: string
 
 # Cancel superseded runs on the same ref to save CI minutes.
 concurrency:
@@ -15,6 +21,12 @@ concurrency:
 
 jobs:
   verify:
+    # Dispatched candidate code may only run under its own update-branch cache
+    # scope. Default-branch dispatch must never execute unreviewed dependencies.
+    if: >-
+      github.event_name != 'workflow_dispatch' ||
+      (startsWith(github.ref, 'refs/heads/automation/thally-framework-') &&
+       github.ref != format('refs/heads/{0}', github.event.repository.default_branch))
     name: Test · Build
     runs-on: ubuntu-latest
     steps:
@@ -27,7 +39,7 @@ jobs:
       - name: Plan validation from changed paths
         id: plan
         env:
-          BASE_SHA: ${{ github.event.pull_request.base.sha }}
+          BASE_SHA: ${{ github.event.pull_request.base.sha || inputs.base_sha }}
         run: node .github/scripts/plan-managed-ci.mjs "$BASE_SHA"
 
       - name: Read pinned runtime provenance
@@ -128,9 +140,9 @@ jobs:
         run: node .github/scripts/verify-managed-content-assets.mjs
 
       - name: Smoke generated Worker routes
-        # Run untrusted preview code only under pull-request cache scope; the
-        # verified PR, not a manual default-branch run, is the release gate.
-        if: steps.plan.outputs.full == 'true' && github.event_name == 'pull_request'
+        # Both PR events and explicit update-branch dispatches run without
+        # deployment credentials or a shared dependency cache.
+        if: steps.plan.outputs.full == 'true' && (github.event_name == 'pull_request' || github.event_name == 'workflow_dispatch')
         run: npm run smoke:cloudflare
         env:
           THALLY_CONTENT_SOURCE: assets

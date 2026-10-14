@@ -9,6 +9,10 @@ const workflow = parse(
   readFileSync('.github/workflows/sync-runtime.yml', 'utf8'),
 )
 
+test('rejects customer copies before requesting the release environment or tokens', () => {
+  assert.equal(workflow.jobs.sync.if, "github.repository == 'thallylabs/starter'")
+})
+
 test('uses a narrowed destination App token for repository writes', () => {
   assert.deepEqual(workflow.permissions, { contents: 'read' })
   assert.equal(workflow.jobs.sync.environment, 'release-control')
