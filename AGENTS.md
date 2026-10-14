@@ -18,7 +18,9 @@ Thally runtime** workflow, review its generated pull request, and let CI prove
 that the snapshot matches the exact runtime commit in `starter-release.json`.
 That generator is restricted to the canonical template repository. Customer
 repositories use **Update Thally framework** to open a reviewed update pull
-request from a published scaffold release. The workflow requires a published
+request from a published scaffold release. It checks weekly on Tuesday at
+03:43 UTC and also supports manual dispatch. An existing matching update PR
+is retained; customer PRs are never merged automatically. The workflow requires a published
 CLI with `--require-complete` support and stops before changes when that
 capability is unavailable. For local updates, use the ownership-aware
 `thally starter update` command, reviewing its dry-run plan

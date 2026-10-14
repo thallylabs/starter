@@ -40,3 +40,27 @@ test('token-suppressed pull requests dispatch the same secret-free validation', 
   const plan = ci.jobs.verify.steps.find(step => step.id === 'plan')
   assert.match(plan.env.BASE_SHA, /inputs\.base_sha/)
 })
+
+
+test('weekly checks reuse the customer guards and published complete-update requirement', () => {
+  assert.deepEqual(workflow.on.schedule, [{ cron: '43 3 * * 2' }])
+  assert.match(job.if, /github\.repository != 'thallylabs\/starter'/)
+  assert.match(job.if, /github\.event\.repository\.default_branch/)
+  const canonical = parse(readFileSync('.github/workflows/sync-runtime.yml', 'utf8'))
+  assert.equal(canonical.on.schedule, undefined)
+  assert.equal(canonical.jobs.sync.if, "github.repository == 'thallylabs/starter'")
+  assert.match(job.steps.find(step => step.id === 'update').run, /grep -q -- '--require-complete'/)
+  assert.doesNotMatch(JSON.stringify(workflow), /gh pr merge/)
+})
+
+test('existing open update PRs are retained without overwriting or dispatching CI again', () => {
+  const run = job.steps.find(step => step.id === 'pull-request').run
+  const existingBranch = run.slice(run.indexOf('if git ls-remote'), run.indexOf('current_base='))
+  assert.match(existingBranch, /gh pr view "\$branch" --json url,state,baseRefName,headRefName/)
+  assert.match(existingBranch, /\.state == "OPEN" and \.baseRefName == \$base and \.headRefName == \$head/)
+  assert.match(existingBranch, /needs_dispatch=false/)
+  assert.match(existingBranch, /exit 0/)
+  assert.match(existingBranch, /without a matching open pull request/)
+  assert.match(existingBranch, /exit 1/)
+  assert.doesNotMatch(existingBranch, /git push|git commit|gh workflow run/)
+})

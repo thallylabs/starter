@@ -4,6 +4,9 @@ name: Update Thally framework
 
 on:
   workflow_dispatch:
+  schedule:
+    # Tuesday 03:43 UTC: check published releases without merging customer PRs.
+    - cron: '43 3 * * 2'
 
 permissions:
   contents: read
@@ -79,7 +82,17 @@ jobs:
           branch="automation/thally-framework-${MANIFEST_HASH:0:12}-${BASE_SHA:0:12}"
           gh auth setup-git
           if git ls-remote --exit-code --heads origin "$branch" > /dev/null 2>&1; then
-            echo "::error::An update branch already exists. Review its pull request before retrying; this workflow never overwrites an existing branch."
+            if existing_pr="$(gh pr view "$branch" --json url,state,baseRefName,headRefName 2>/dev/null)" &&
+              jq -e --arg base "$BASE_BRANCH" --arg head "$branch" \
+                '.state == "OPEN" and .baseRefName == $base and .headRefName == $head' \
+                <<< "$existing_pr" > /dev/null; then
+              pr_url="$(jq -r .url <<< "$existing_pr")"
+              echo "Existing framework update pull request: $pr_url"
+              echo "The same framework update is already open: $pr_url" >> "$GITHUB_STEP_SUMMARY"
+              echo "needs_dispatch=false" >> "$GITHUB_OUTPUT"
+              exit 0
+            fi
+            echo "::error::The update branch exists without a matching open pull request. Resolve the collision before retrying; this workflow never overwrites a branch."
             exit 1
           fi
           current_base="$(gh api "repos/$GITHUB_REPOSITORY/commits/$BASE_BRANCH" --jq .sha)"
