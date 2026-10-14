@@ -12,10 +12,18 @@ The sole production architecture authority is
 That repository is private; this file defines only starter-local ownership and
 workflow rules. Do not create another architecture document here.
 
-Runtime-owned files in this repository are a generated snapshot, not a second
-implementation. Never hand-apply a runtime fix here. Run the **Sync Thally
-runtime** workflow, review its generated pull request, and let CI prove that
-the snapshot matches the exact runtime commit in `starter-release.json`.
+Runtime-owned files are a generated snapshot, not a second implementation.
+Never hand-apply a runtime fix here. In `thallylabs/starter`, run the **Sync
+Thally runtime** workflow, review its generated pull request, and let CI prove
+that the snapshot matches the exact runtime commit in `starter-release.json`.
+That generator is restricted to the canonical template repository. Customer
+repositories use **Update Thally framework** to open a reviewed update pull
+request from a published scaffold release. The workflow requires a published
+CLI with `--require-complete` support and stops before changes when that
+capability is unavailable. For local updates, use the ownership-aware
+`thally starter update` command, reviewing its dry-run plan
+and resolving framework or package conflicts before applying. Never run the
+snapshot generator against a customer tree or replace only its manifest.
 
 Before placing a feature, trace the actual creation or request path in code and
 identify the deployed artifact. Do not infer ownership from repository names

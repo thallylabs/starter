@@ -31,6 +31,9 @@ concurrency:
 jobs:
   sync:
     name: Generate starter snapshot
+    # Snapshot generation belongs to the canonical template. Customer copies
+    # must use promoted releases through the ownership-aware site updater.
+    if: github.repository == 'thallylabs/starter'
     runs-on: ubuntu-latest
     environment: release-control
     steps:
