@@ -32,6 +32,8 @@ test('rejects an old published CLI before applying or creating a pull request', 
 test('token-suppressed pull requests dispatch the same secret-free validation', () => {
   assert.equal(ci.on.workflow_dispatch.inputs.base_sha.required, true)
   assert.deepEqual(ci.permissions, { contents: 'read' })
+  assert.match(ci.jobs.verify.if, /startsWith\(github\.ref, 'refs\/heads\/automation\/thally-framework-'/)
+  assert.match(ci.jobs.verify.if, /github\.ref != format\('refs\/heads\/\{0\}', github\.event\.repository\.default_branch\)/)
   const validate = job.steps.find(step => step.name === 'Run update pull request validation')
   assert.equal(validate.if, "steps.pull-request.outputs.needs_dispatch == 'true'")
   assert.match(validate.run, /gh workflow run ci\.yml --ref "\$UPDATE_BRANCH"/)
