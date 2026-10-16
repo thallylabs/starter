@@ -39,7 +39,7 @@ jobs:
       - name: Plan validation from changed paths
         id: plan
         env:
-          BASE_SHA: ${{ github.event.pull_request.base.sha || inputs.base_sha }}
+          BASE_SHA: ${{ github.event.pull_request.base.sha || github.event.merge_group.base_sha || inputs.base_sha }}
         run: node .github/scripts/plan-managed-ci.mjs "$BASE_SHA"
 
       - name: Read pinned runtime provenance

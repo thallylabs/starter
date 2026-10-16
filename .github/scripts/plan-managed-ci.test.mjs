@@ -3,7 +3,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 
-import { createManagedCiPlan } from "./plan-managed-ci.mjs";
+import { changedPaths, createManagedCiPlan } from "./plan-managed-ci.mjs";
 
 test("content and navigation changes use the lightweight gate", () => {
   assert.deepEqual(
@@ -29,4 +29,22 @@ test("runtime and dependency changes retain the full gate", () => {
 
 test("manual or ambiguous validation retains the full gate", () => {
   assert.equal(createManagedCiPlan([]).full, true);
+});
+
+
+test("unavailable comparison history fails closed", () => {
+  assert.deepEqual(changedPaths("invalid"), []);
+  assert.deepEqual(changedPaths("0".repeat(40)), []);
+});
+
+
+test("runtime-to-content renames retain both sides of the impact comparison", () => {
+  const paths = changedPaths("a".repeat(40), (command, arguments_) => {
+    assert.equal(command, "git");
+    assert.ok(arguments_.includes("--no-renames"));
+    assert.ok(arguments_.includes("-z"));
+    return "src/lib/runtime.ts\0src/content/runtime.mdx\0";
+  });
+  assert.deepEqual(paths, ["src/lib/runtime.ts", "src/content/runtime.mdx"]);
+  assert.equal(createManagedCiPlan(paths).full, true);
 });
