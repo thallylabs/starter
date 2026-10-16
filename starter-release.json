@@ -5,8 +5,8 @@
   "defaultBranch": "main",
   "runtime": {
     "repository": "thallylabs/thally",
-    "commitSha": "6b1843c8d1662555324237a951d2df0b94a4c8ce",
-    "treeSha": "11f06dac9c92fb605ce0270af51910d1259993c8"
+    "commitSha": "7bbdec81ba4932831ee4a1d0c7e5aa20e47d7d6c",
+    "treeSha": "1033799748f20310c85054707ff11ab16f0fccd6"
   },
   "packages": {
     "@thallylabs/core": "^0.2.12"
