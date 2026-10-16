@@ -29,16 +29,19 @@ export function createManagedCiPlan(paths) {
   };
 }
 
-export function changedPaths(baseSha) {
+export function changedPaths(baseSha, run = execFileSync) {
   if (!/^[a-f0-9]{40}$/i.test(baseSha)) {
     return [];
   }
-  return execFileSync("git", ["diff", "--name-only", `${baseSha}...HEAD`], {
-    encoding: "utf8",
-  })
-    .split("\n")
-    .map((path) => path.trim())
-    .filter(Boolean);
+  try {
+    // NUL delimiters preserve unusual filenames; missing history fails closed.
+    return run("git", ["diff", "--name-only", "--no-renames", "-z", `${baseSha}...HEAD`], {
+      encoding: "utf8",
+      stdio: ["ignore", "pipe", "ignore"],
+    }).split("\0").filter(Boolean);
+  } catch {
+    return [];
+  }
 }
 
 export function main() {
