@@ -118,6 +118,10 @@ jobs:
         if: steps.plan.outputs.full == 'true'
         run: node --test .github/scripts/*.test.mjs
 
+      - name: Qualify installed customer navigation tooling
+        if: steps.plan.outputs.full == 'true'
+        run: node .github/scripts/verify-installed-navigation.mjs
+
       - name: Test
         if: steps.plan.outputs.full == 'true'
         run: npm test
