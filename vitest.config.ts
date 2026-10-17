@@ -12,7 +12,8 @@ export default defineConfig({
   },
   test: {
     environment: 'node',
-    include: ['src/**/*.test.ts'],
+    // Runtime snapshots include React component contracts as well as server units.
+    include: ['src/**/*.test.{ts,tsx}'],
     coverage: {
       reporter: ['text', 'html'],
     },
