@@ -22,11 +22,16 @@ product.
     Scaffold locally when you want to explore before publishing:
 
     ```bash
-    npm create thally-docs@latest my-docs
+    npx create-thally-docs@latest my-docs
+    cd my-docs
+    npx thally dev
     ```
 
-    Run it with `thally dev`, then connect the repository to Thally Cloud
-    later — or deploy it yourself with `thally deploy`.
+    New sites use Tailwind CSS 4. If you need Tailwind CSS 3, create the site
+    with `npx create-thally-docs@latest my-docs --tailwind-version 3` instead.
+
+    You can connect the repository to Thally Cloud later or deploy it yourself
+    with `npx thally deploy`.
   </Tab>
   <Tab title="Migrate an existing site">
     Already have docs on another platform? Convert them in place:
@@ -68,3 +73,23 @@ Your content, navigation, and branding are yours; the framework underneath
 ships as immutable releases. When a new release is available, **Settings →
 Version** in Thally Cloud shows it and upgrades the site in one click —
 framework files only, never your content.
+
+## Update your site from the CLI
+
+Run the current CLI from your project root to review the available update:
+
+```bash
+npx @thallylabs/cli@latest starter update
+```
+
+Resolve conflicts shown in the plan before you apply the update:
+
+```bash
+npx @thallylabs/cli@latest starter update --apply
+npm ci
+```
+
+The updater preserves your content, navigation, and branding. If your site uses
+Tailwind CSS 3, follow the [Tailwind CSS 4 upgrade guide](https://github.com/thallylabs/thally/blob/main/docs/tailwind-v4-upgrade.md)
+to review CSS utilities in your own MDX and custom components. You can keep your
+current site and lockfile if you still need Tailwind 3.

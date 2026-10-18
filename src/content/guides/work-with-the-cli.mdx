@@ -11,6 +11,23 @@ run every command from the repository root with `npx`, for example
 npm install --global @thallylabs/cli
 ```
 
+## Create a site
+
+New sites use Tailwind CSS 4:
+
+```bash
+npx @thallylabs/cli@latest init my-docs
+```
+
+Add `--tailwind-version 3` to use the fixed Tailwind CSS 3 starter:
+
+```bash
+npx @thallylabs/cli@latest init my-docs-3 --tailwind-version 3
+```
+
+The flag applies to new sites. For an existing site, review
+`npx @thallylabs/cli@latest starter update` before you apply an update.
+
 ## The daily loop
 
 <Steps>

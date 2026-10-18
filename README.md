@@ -21,6 +21,26 @@ available to maintainers with access to the private repository. The CLI, MCP,
 and Cloud creation flows consume an exact promoted scaffold release rather
 than treating the mutable `main` branch as a release identity.
 
+## Create a site
+
+Use the CLI to create a new site with Tailwind CSS 4:
+
+```bash
+npx create-thally-docs@latest my-docs
+cd my-docs
+npx thally dev
+```
+
+If you need Tailwind CSS 3, use `--tailwind-version 3`:
+
+```bash
+npx create-thally-docs@latest my-docs-3 --tailwind-version 3
+```
+
+The flag selects a fixed starter snapshot with its matching framework,
+configuration, and lockfile. It applies to new sites. Cloning this repository
+uses the version in the branch you clone.
+
 ## Run locally
 
 ```bash
@@ -45,15 +65,30 @@ The `thally` CLI is a dev dependency of this site. Once the preview is ready,
 - Replace `openapi.yaml` with your API specification.
 - Add logos or favicons in `public/` and reference them from your site settings.
 
-`starter-release.json` records the immutable starter and runtime version used
-to create the site. Keep it in the repository so `thally starter update` can
-plan framework updates without overwriting your content or portable settings.
+## Update the framework
 
-`thally starter update` performs a three-way comparison between the recorded
-previous scaffold, the promoted target scaffold, and your current project. It
-updates unchanged framework-owned files, preserves user-owned files, and stops
-for manual review when those contracts overlap. The command is a dry run until
-you pass `--apply`.
+Run the current CLI from your project root to review an update:
+
+```bash
+npx @thallylabs/cli@latest starter update
+```
+
+The command compares your project with its original framework and the latest
+release. It preserves your content and settings. If you edited framework files
+or dependencies, resolve any conflicts shown in the plan before you apply it:
+
+```bash
+npx @thallylabs/cli@latest starter update --apply
+npm ci
+```
+
+Keep `starter-release.json` in your repository. The updater uses it to identify
+your current framework. Do not change its version by hand.
+
+For a Tailwind 3 site, follow the
+[Tailwind CSS 4 upgrade guide](https://github.com/thallylabs/thally/blob/main/docs/tailwind-v4-upgrade.md)
+to review your own CSS utilities after the framework update. You can keep your
+current site and lockfile if you still need Tailwind 3.
 
 Maintainers update the generated runtime snapshot through the **Sync Thally
 runtime** workflow. CI rejects a changed pin without matching files, changed
