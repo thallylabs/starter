@@ -5,6 +5,47 @@ import path from 'node:path'
 import { getContentAssetFetcher } from '@/lib/content-source/runtime'
 import { publicBrandAssetPath } from '@/lib/public-brand-asset'
 
+/** Validate XML comments in place; deleting them could create new source tokens. */
+function hasValidSvgComments(content: string): boolean {
+  let inTag = false
+  let quote: '"' | "'" | undefined
+  for (let offset = 0; offset < content.length; offset += 1) {
+    const character = content[offset]
+    if (character === '<') {
+      // Comments cannot splice tag names, attribute names, or quoted values.
+      // XML disallows a literal '<' anywhere inside an opening/closing tag.
+      if (inTag) return false
+      if (content.startsWith('<!--', offset)) {
+        const end = content.indexOf('-->', offset + 4)
+        if (end === -1) return false
+        const body = content.slice(offset + 4, end)
+        // XML forbids double hyphens within comments, including nested openers,
+        // and a trailing hyphen would combine with the terminator into `--->`.
+        if (body.includes('--') || body.endsWith('-')) return false
+        offset = end + 2
+      } else inTag = true
+    } else if (inTag) {
+      if (quote) {
+        if (character === quote) quote = undefined
+      } else if (character === '"' || character === "'") quote = character
+      else if (character === '>') inTag = false
+    }
+  }
+  return !inTag
+}
+
+/** Comments may precede the root, but a commented-out root is not artwork. */
+function hasSvgRoot(content: string): boolean {
+  let offset = 0
+  while (offset < content.length) {
+    while (/\s/.test(content[offset] ?? '') && offset < content.length) offset += 1
+    if (!content.startsWith('<!--', offset)) break
+    // Comment syntax has already been validated, so its terminator exists.
+    offset = content.indexOf('-->', offset + 4) + 3
+  }
+  return /^<svg(?:\s|\/?>)/i.test(content.slice(offset))
+}
+
 /** Read this deployment's static asset binding, or a real file within public/. */
 export async function readPublicAsset(assetPath: string, maxBytes: number): Promise<Buffer | null> {
   const safePath = publicBrandAssetPath(assetPath)
@@ -53,11 +94,16 @@ export async function publicBrandImageDataUri(assetPath: string): Promise<string
   const bytes = await readPublicAsset(assetPath, 512 * 1024)
   if (!bytes?.length) return null
   if (extension === '.svg') {
-    const svg = bytes.toString('utf8').replace(/^\s*<\?xml\s[^?]*\?>/i, '').replace(/<!--[\s\S]*?-->/g, '')
+    const svg = bytes.toString('utf8')
+    // Permit only an ordinary UTF-8 XML declaration at the start. Admission
+    // inspects the remaining document, but embeds the original bytes unchanged.
+    const declaration = /^\s*<\?xml\s+version\s*=\s*(["'])1\.0\1(?:\s+encoding\s*=\s*(["'])UTF-8\2)?(?:\s+standalone\s*=\s*(["'])(?:yes|no)\3)?\s*\?>/i.exec(svg)
+    const content = declaration ? svg.slice(declaration[0].length) : svg
     // SVG is parsed solely by the image renderer, never evaluated. Refuse even
     // passive references so custom images cannot cause external resource fetches.
-    if (!/<svg[\s>]/i.test(svg) || /<!|<\?|<\s*(?:script|foreignObject|image|use|style|animate\w*|set)\b|\bon[a-z]+\s*=|\b(?:href|src)\s*=|[\\&]|url\s*\((?!\s*['"]?#[\w.-]+['"]?\s*\))/i.test(svg)) return null
-    return `data:${mime};base64,${Buffer.from(svg).toString('base64')}`
+    // Harmless exporter comments remain intact. Other declarations and unsafe
+    // resource/script constructs are rejected even when written in a comment.
+    if (!hasValidSvgComments(content) || !hasSvgRoot(content) || /<!(?!--)|<\?|<\s*(?:script|foreignObject|image|use|style|animate\w*|set)\b|\bon[a-z]+\s*=|\b(?:href|src)\s*=|[\\&]|url\s*\((?!\s*['"]?#[\w.-]+['"]?\s*\))/i.test(content)) return null
   }
   return `data:${mime};base64,${bytes.toString('base64')}`
 }
