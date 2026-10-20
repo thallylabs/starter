@@ -3,42 +3,45 @@ title: Work with the CLI
 description: The thally commands you will actually use day to day.
 ---
 
-This site includes the CLI as a dev dependency, so after `npm install` you can
-run every command from the repository root with `npx`, for example
-`npx thally dev`. To type `thally` directly, install it globally:
+The default project runs with `npm run dev` and keeps the CLI outside your
+site's dependency graph. Run `npm run check` for content validation and
+`npm run starter:update` for a framework update dry run. These scripts use the
+current official CLI so new scaffold releases do not depend on a frozen local
+catalog. To use other commands without a global installation:
 
 ```bash
-npm install --global @thallylabs/cli
+npx --yes --package=@thallylabs/cli@latest thally --help
 ```
+
+You can also install the CLI globally with `npm install --global @thallylabs/cli`;
+keep that installation current before framework updates.
 
 ## The daily loop
 
 <Steps>
   <Step title="Run the site locally">
     ```bash
-    thally dev
+    npm run dev
     ```
 
     Serves the site with search, agent endpoints, and the API playground
-    live, so what you review locally is what readers get. Once it is ready,
-    it prints the local `/llms.txt` and `/api/mcp` URLs and a
-    `claude mcp add` command for connecting Claude Code.
+    live, so what you review locally is what readers get. Agent endpoints are available at `/llms.txt` and `/api/mcp`.
   </Step>
   <Step title="Add a page">
     ```bash
-    thally new deploy-guide --title "Deploy your first project"
+    npx --yes --package=@thallylabs/cli@latest thally new deploy-guide --title "Deploy your first project"
     ```
 
     Creates the page and registers it in `docs.json` in one step.
   </Step>
   <Step title="Check before you push">
     ```bash
-    thally check
+    npm run check
     ```
 
     Lints content, verifies links and navigation, and scores how well the
     site answers questions for AI tools — the same Agent Readiness score the
-    Cloud dashboard shows. Add `--fix` for autofixable issues, `--ci` in
+    Cloud dashboard shows. Add `-- --fix` for autofixable issues, `-- --ci` in
     pipelines.
   </Step>
 </Steps>
@@ -49,7 +52,7 @@ npm install --global @thallylabs/cli
 reviewed docs update:
 
 ```bash
-thally agent "document the new webhook retry behavior" --pr
+npx --yes --package=@thallylabs/cli@latest thally agent "document the new webhook retry behavior" --pr
 ```
 
 Wire it to your product repositories with `thally track add <owner/repo>` and
@@ -58,7 +61,7 @@ merged product PRs open docs PRs on their own.
 ## Everything else
 
 ```bash
-thally --help
+npx --yes --package=@thallylabs/cli@latest thally --help
 ```
 
 Translation (`thally translate`), migration (`thally migrate`), deployment

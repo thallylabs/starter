@@ -23,7 +23,7 @@ request from a published scaffold release. It checks weekly on Tuesday at
 is retained; customer PRs are never merged automatically. The workflow requires a published
 CLI with `--require-complete` support and stops before changes when that
 capability is unavailable. For local updates, use the ownership-aware
-`thally starter update` command, reviewing its dry-run plan
+`npm run starter:update` command, reviewing its dry-run plan
 and resolving framework or package conflicts before applying. Never run the
 snapshot generator against a customer tree or replace only its manifest.
 
@@ -64,8 +64,9 @@ upgrade an existing site or move a production release pointer.
 - Keep page slugs stable once published.
 - Add pages to `docs.json`; do not leave useful pages orphaned.
 - Update `openapi.yaml` when API behavior changes.
-- Run `npm ci --ignore-scripts --prefix .github/thally-tooling`, then
-  `.github/thally-tooling/node_modules/.bin/thally check --ci .`, `npm test`,
+- Run `npm run check -- --ci`, or install the pinned CI tooling with
+  `npm ci --ignore-scripts --prefix .github/thally-tooling` and run
+  `.github/thally-tooling/node_modules/.bin/thally check --ci .`, `npm run typecheck`,
   and `npm run build` before publishing.
 
 ## Product context

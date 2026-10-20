@@ -18,7 +18,7 @@ test("merge groups compare against their actual base before selecting content-on
 test("candidate content validation is unconditional and full validation retains provenance and artifact checks", () => {
   const steps = workflow.jobs.verify.steps;
   assert.equal(steps.find((step) => step.name === "Check authored content").if, undefined);
-  for (const name of ["Verify generated runtime snapshot", "Test", "Build managed runtime and content assets", "Verify managed content artifact", "Qualify installed customer navigation tooling"]) {
+  for (const name of ["Verify generated runtime snapshot", "Check production types", "Install optional Cloudflare tooling", "Build managed runtime and content assets", "Verify managed content artifact", "Qualify installed customer navigation tooling"]) {
     assert.equal(steps.find((step) => step.name === name).if, "steps.plan.outputs.full == 'true'", name);
   }
 });
@@ -29,4 +29,12 @@ test("installed navigation qualification runs after customer dependencies are in
   const qualification = steps.findIndex((step) => step.name === "Qualify installed customer navigation tooling");
   assert.ok(qualification > install);
   assert.equal(steps[qualification].run, "node .github/scripts/verify-installed-navigation.mjs");
+});
+
+test("provider installation is explicit and precedes the managed build", () => {
+  const steps = workflow.jobs.verify.steps;
+  const setup = steps.findIndex((step) => step.name === "Install optional Cloudflare tooling");
+  const build = steps.findIndex((step) => step.name === "Build managed runtime and content assets");
+  assert.ok(setup > 0 && setup < build);
+  assert.equal(steps[setup].run, "npm run setup:cloudflare");
 });

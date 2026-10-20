@@ -25,14 +25,14 @@ product.
     npm create thally-docs@latest my-docs
     ```
 
-    Run it with `thally dev`, then connect the repository to Thally Cloud
-    later — or deploy it yourself with `thally deploy`.
+    Run it with `npm run dev`, then connect the repository to Thally Cloud
+    later — or deploy it yourself with `npx --yes --package=@thallylabs/cli@latest thally deploy`.
   </Tab>
   <Tab title="Migrate an existing site">
     Already have docs on another platform? Convert them in place:
 
     ```bash
-    npx @thallylabs/cli migrate https://github.com/your-org/your-docs
+    npx --yes --package=@thallylabs/cli@latest thally migrate https://github.com/your-org/your-docs
     ```
 
     The migrator converts Mintlify and Docusaurus projects and keeps your
@@ -47,7 +47,7 @@ On a Cloud-connected site, publishing is a git push:
 <Steps>
   <Step title="Edit content">
     Change any page under `src/content/`, or add one with
-    `thally new <page-id>`.
+    `npx --yes --package=@thallylabs/cli@latest thally new <page-id>`.
   </Step>
   <Step title="Push to the default branch">
     Content-only changes go live in well under a minute; changes that touch
