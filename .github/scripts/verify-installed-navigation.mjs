@@ -1,5 +1,5 @@
-/** Qualify the installed customer and workflow CLIs against root navigation.
- * Source-level tests cannot catch a starter lockfile retaining an older checker.
+/** Qualify the isolated pinned workflow CLI against root navigation.
+ * Site dependencies deliberately omit the CLI; CI keeps its validator isolated.
  */
 import assert from "node:assert/strict";
 import { mkdtempSync, mkdirSync, writeFileSync, rmSync } from "node:fs";
@@ -23,7 +23,7 @@ try {
       "Get started with the product and verify that your documentation works.",
     ].join("\n"));
   }
-  for (const prefix of [".", ".github/thally-tooling"]) {
+  for (const prefix of [".github/thally-tooling"]) {
     const cli = resolve(prefix, "node_modules/@thallylabs/cli/dist/index.js");
     const result = spawnSync(process.execPath, [cli, "check", "--ci", fixture], {
       encoding: "utf8", timeout: 60_000,

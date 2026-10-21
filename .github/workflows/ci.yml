@@ -27,7 +27,7 @@ jobs:
       github.event_name != 'workflow_dispatch' ||
       (startsWith(github.ref, 'refs/heads/automation/thally-framework-') &&
        github.ref != format('refs/heads/{0}', github.event.repository.default_branch))
-    name: Test · Build
+    name: Check · Build
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
@@ -59,12 +59,14 @@ jobs:
           );
           NODE
 
-      - name: Checkout pinned Thally runtime
+      # Bootstrap from the fixed protected branch, then prove the manifest's
+      # selected revision belongs to it before executing that revision's tools.
+      - name: Checkout trusted Thally runtime
         if: steps.plan.outputs.full == 'true'
         uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
         with:
           repository: thallylabs/thally
-          ref: ${{ steps.runtime.outputs.sha }}
+          ref: main
           path: runtime-source
           fetch-depth: 0
           persist-credentials: false
@@ -74,9 +76,11 @@ jobs:
         env:
           RUNTIME_SHA: ${{ steps.runtime.outputs.sha }}
         run: |
+          [[ "$RUNTIME_SHA" =~ ^[0-9a-f]{40}$ ]]
           git -C runtime-source fetch --no-tags origin main
-          test "$(git -C runtime-source rev-parse HEAD)" = "$RUNTIME_SHA"
           git -C runtime-source merge-base --is-ancestor "$RUNTIME_SHA" origin/main
+          git -C runtime-source checkout --detach "$RUNTIME_SHA"
+          test "$(git -C runtime-source rev-parse HEAD)" = "$RUNTIME_SHA"
 
       - name: Verify generated runtime snapshot
         if: steps.plan.outputs.full == 'true'
@@ -98,6 +102,7 @@ jobs:
         with:
           # Wrangler 4.111+ requires Node 22 for the exact dry-run package gate.
           node-version: 22
+          package-manager-cache: false
 
       # Do not enable setup-node's shared dependency cache here. Pull requests
       # execute repository-controlled install, test, and build commands; letting
@@ -122,9 +127,20 @@ jobs:
         if: steps.plan.outputs.full == 'true'
         run: node .github/scripts/verify-installed-navigation.mjs
 
-      - name: Test
+      # CI suppresses dependency lifecycle scripts, so explicitly prepare the
+      # same generated modules that a normal customer postinstall provides.
+      - name: Generate runtime sources for production checks
         if: steps.plan.outputs.full == 'true'
-        run: npm test
+        run: npm run runtime-sources:build
+
+      - name: Check production types
+        if: steps.plan.outputs.full == 'true'
+        run: npm run typecheck
+
+      # Provider tooling is an explicit CI profile, not a customer dependency.
+      - name: Install optional Cloudflare tooling
+        if: steps.plan.outputs.full == 'true'
+        run: npm run setup:cloudflare
 
       - name: Build managed runtime and content assets
         if: steps.plan.outputs.full == 'true'

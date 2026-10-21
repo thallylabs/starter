@@ -25,17 +25,29 @@ than treating the mutable `main` branch as a release identity.
 
 ```bash
 npm install
-npx thally dev
+npm run dev
 ```
 
-Open [http://localhost:3040](http://localhost:3040). The next available port is
-used automatically when 3040 is occupied. `npm run dev` starts the same server.
+Node.js 22.14+ or 24+ is recommended; Node.js 20.19+ is also supported.
+The checked-in npm lockfile makes `npm ci` the
+reproducible installation command. You can also use `pnpm install` or
+`yarn install`; use one package manager per project and commit its lockfile.
 
-The `thally` CLI is a dev dependency of this site. Once the preview is ready,
-`thally dev` prints the local agent endpoints (`/llms.txt`, `/api/mcp`) and a
-`claude mcp add --transport http` command for connecting Claude Code. Run
-`npx thally --help` for the other commands, such as `thally new`,
-`thally check`, and `thally deploy`.
+If installation is interrupted, keep your content and configuration. Remove
+only `node_modules`, then run `npm ci` again (or your selected package manager's
+install command). This repairs incomplete packages such as Shiki without
+recreating the site or deleting the dependency lockfile.
+
+Open [http://localhost:3040](http://localhost:3040). If that port is occupied,
+choose another with `npm run dev -- --port 3041`.
+
+The default project runs Next.js directly and does not install the Thally CLI.
+Use `npm run check` to validate documentation and `npm run starter:update` to
+preview framework updates. These commands explicitly invoke the current official
+`@thallylabs/cli` package, so a frozen local CLI cannot block a newer scaffold.
+Pass update options after `--`, for example `npm run starter:update -- --apply`
+after reviewing the dry run. For other commands, run
+`npx --yes --package=@thallylabs/cli@latest thally --help`.
 
 ## Make it yours
 
@@ -46,10 +58,10 @@ The `thally` CLI is a dev dependency of this site. Once the preview is ready,
 - Add logos or favicons in `public/` and reference them from your site settings.
 
 `starter-release.json` records the immutable starter and runtime version used
-to create the site. Keep it in the repository so `thally starter update` can
+to create the site. Keep it in the repository so `npm run starter:update` can
 plan framework updates without overwriting your content or portable settings.
 
-`thally starter update` performs a three-way comparison between the recorded
+`npm run starter:update` performs a three-way comparison between the recorded
 previous scaffold, the promoted target scaffold, and your current project. It
 updates unchanged framework-owned files, preserves user-owned files, and stops
 for manual review when those contracts overlap. The command is a dry run until
@@ -67,8 +79,8 @@ with `markdown.enabled` when that distribution surface fits your access model.
 ## Validate changes
 
 ```bash
-npx thally check
-npm test
+npm run check
+npm run typecheck
 npm run build
 ```
 
@@ -80,7 +92,18 @@ CI runs the same content check with the pinned workflow tooling:
 
 The site is a standard Next.js application. Deploy it through Thally Cloud or
 any compatible Next.js host. Cloudflare Workers configuration is included in
-`open-next.config.ts` and `wrangler.jsonc`.
+`open-next.config.ts` and `wrangler.jsonc`. Provider deployment packages and
+Thally’s internal test suites are excluded from the default installation.
+Thally Cloud supplies its own pinned deployment tooling. For self-hosted
+Cloudflare builds, install the optional provider profile explicitly:
+
+```bash
+npm run setup:cloudflare
+npm run build:cloudflare
+```
+
+The setup command records exact OpenNext and Wrangler versions in your project.
+Other Next.js hosts need only the default installation.
 
 Thally Cloud publishes an immutable managed site release and activates it by
 moving the site's production pointer only after validation. Direct hosts use
