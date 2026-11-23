@@ -123,16 +123,37 @@ jobs:
           git commit -m "chore: sync Thally runtime ${SHORT_SHA}"
           git push --force-with-lease origin "$branch"
 
-          if pr_json="$(gh pr view "$branch" --json number,url,headRefOid 2>/dev/null)"; then
-            pr_url="$(jq -r .url <<<"$pr_json")"
-            pr_number="$(jq -r .number <<<"$pr_json")"
-          else
-            pr_url="$(gh pr create \
+          # Reuse only an OPEN pull request from this repository. The branch
+          # name is fixed per runtime commit, so a closed pull request from an
+          # earlier attempt must not be mistaken for this one: it can never
+          # merge, and a new one is opened instead.
+          open_pull_request() {
+            gh pr list \
+              --head "$branch" \
+              --base main \
+              --state open \
+              --json number,url,isCrossRepository \
+              --jq 'map(select(.isCrossRepository == false)) | .[0] // empty'
+          }
+          pr_json="$(open_pull_request)"
+          if [[ -z "$pr_json" ]]; then
+            gh pr create \
               --base main \
               --head "$branch" \
               --title "chore: sync Thally runtime ${SHORT_SHA}" \
-              --body "Generate the standalone starter runtime snapshot from thallylabs/thally@${RUNTIME_SHA}. Runtime-owned files and provenance are verified byte-for-byte by CI.")"
-            pr_number="$(gh pr view "$branch" --json number --jq .number)"
+              --body "Generate the standalone starter runtime snapshot from thallylabs/thally@${RUNTIME_SHA}. Runtime-owned files and provenance are verified byte-for-byte by CI."
+            # The listing can trail the creation by a moment.
+            for attempt in {1..10}; do
+              pr_json="$(open_pull_request)"
+              [[ -n "$pr_json" ]] && break
+              sleep 3
+            done
+          fi
+          pr_url="$(jq -r .url <<<"$pr_json")"
+          pr_number="$(jq -r .number <<<"$pr_json")"
+          if [[ ! "$pr_number" =~ ^[0-9]+$ ]]; then
+            echo "::error::No open synchronization pull request exists for $branch."
+            exit 1
           fi
           echo "changed=true" >> "$GITHUB_OUTPUT"
           echo "number=$pr_number" >> "$GITHUB_OUTPUT"
@@ -141,8 +162,14 @@ jobs:
 
       # The full-release controller is the operator's release authorization.
       # This workflow still waits for the destination repository's own CI and
-      # matches the checked head SHA at merge time, so automation cannot merge
-      # unverified or subsequently changed bytes.
+      # then advances `main` to the exact commit CI verified, so automation
+      # cannot merge unverified or subsequently changed bytes.
+      #
+      # `main` moves by fast-forward rather than a squash merge. A squash
+      # creates a new commit that no check ever ran on and whose SHA is unknown
+      # until the merge. A fast-forward keeps the verified commit, so the
+      # release controller can bind a release record to this SHA as soon as
+      # the pull request opens and prepare the record while CI is running.
       - name: Merge after CI succeeds
         if: >-
           inputs.auto_merge &&
@@ -155,11 +182,24 @@ jobs:
           PR_NUMBER: ${{ steps.pull-request.outputs.number }}
         run: |
           set -euo pipefail
-          pr_identity="$(gh pr view "$PR_NUMBER" --json baseRefOid,headRefOid)"
+          pr_identity="$(gh pr view "$PR_NUMBER" --json baseRefOid,headRefOid,headRefName)"
           base_sha="$(jq -r .baseRefOid <<<"$pr_identity")"
           head_sha="$(jq -r .headRefOid <<<"$pr_identity")"
+          head_branch="$(jq -r .headRefName <<<"$pr_identity")"
           if [[ "$base_sha" != "$EXPECTED_BASE_SHA" ]]; then
             echo "::error::Starter main advanced before CI was bound to the synchronization PR."
+            exit 1
+          fi
+          # A fast-forward is only the verified change when the pull request
+          # head is the single commit this run generated on the checked base.
+          generated_sha="$(git rev-parse HEAD)"
+          generated_parents="$(git rev-list --parents -n 1 HEAD | cut -d' ' -f2-)"
+          if [[ "$head_sha" != "$generated_sha" || "$generated_parents" != "$EXPECTED_BASE_SHA" ]]; then
+            echo "::error::Pull request #$PR_NUMBER is not the one generated commit on $EXPECTED_BASE_SHA."
+            exit 1
+          fi
+          if [[ ! "$head_branch" =~ ^automation/runtime-[0-9a-f]{12}$ ]]; then
+            echo "::error::Pull request #$PR_NUMBER has an unexpected head branch."
             exit 1
           fi
           run_id=""
@@ -182,12 +222,48 @@ jobs:
           fi
           gh run watch "$run_id" --exit-status
           current_base="$(gh api "repos/$GITHUB_REPOSITORY/commits/main" --jq .sha)"
-          final_base="$(gh pr view "$PR_NUMBER" --json baseRefOid --jq .baseRefOid)"
+          final_identity="$(gh pr view "$PR_NUMBER" --json baseRefOid,headRefOid)"
+          final_base="$(jq -r .baseRefOid <<<"$final_identity")"
+          final_head="$(jq -r .headRefOid <<<"$final_identity")"
           if [[ "$current_base" != "$EXPECTED_BASE_SHA" || "$final_base" != "$EXPECTED_BASE_SHA" ]]; then
             echo "::error::main advanced after CI; rerun synchronization against the new base."
             exit 1
           fi
-          gh pr merge "$PR_NUMBER" \
-            --squash \
-            --delete-branch \
-            --match-head-commit "$head_sha"
+          if [[ "$final_head" != "$head_sha" ]]; then
+            echo "::error::Pull request #$PR_NUMBER changed after CI verified $head_sha."
+            exit 1
+          fi
+
+          # `force=false` makes GitHub reject every update that is not a
+          # fast-forward. The verified commit's only parent is the expected
+          # base, so the one update GitHub can accept is base -> verified head;
+          # if `main` moved in the meantime this fails and nothing is merged.
+          gh api --method PATCH "repos/$GITHUB_REPOSITORY/git/refs/heads/main" \
+            -f sha="$head_sha" \
+            -F force=false >/dev/null
+          merged_main="$(gh api "repos/$GITHUB_REPOSITORY/commits/main" --jq .sha)"
+          if [[ "$merged_main" != "$head_sha" ]]; then
+            echo "::error::Starter main is $merged_main, not the verified commit $head_sha."
+            exit 1
+          fi
+          echo "Fast-forwarded main to $head_sha."
+
+          # `main` now holds the verified commit, so the remaining steps only
+          # tidy up and must not fail the release. GitHub marks a pull request
+          # merged once its head commit is on the base branch; wait for that
+          # before deleting the branch, because deleting the head branch of a
+          # pull request that is still open closes it as unmerged instead.
+          pr_state=""
+          for attempt in {1..24}; do
+            pr_state="$(gh pr view "$PR_NUMBER" --json state --jq .state || true)"
+            [[ "$pr_state" == "MERGED" ]] && break
+            sleep 5
+          done
+          if [[ "$pr_state" != "MERGED" ]]; then
+            echo "::warning::Pull request #$PR_NUMBER was not marked merged after main reached $head_sha; closing it."
+            gh pr close "$PR_NUMBER" \
+              --comment "Starter main was fast-forwarded to the verified commit $head_sha." || true
+          fi
+          if ! gh api --method DELETE "repos/$GITHUB_REPOSITORY/git/refs/heads/$head_branch" >/dev/null; then
+            echo "::warning::Could not delete $head_branch after merging pull request #$PR_NUMBER."
+          fi
