@@ -1,12 +1,12 @@
 {
   "schemaVersion": 1,
-  "starterVersion": 3,
+  "starterVersion": 4,
   "repository": "thallylabs/starter",
   "defaultBranch": "main",
   "runtime": {
     "repository": "thallylabs/thally",
-    "commitSha": "af0e07efeff080e675c9a386902788b1e0450037",
-    "treeSha": "722871b23f4ed64d9bb8efc6f00406eb7e170f7f"
+    "commitSha": "d64e845aa9811a1c71ccc036d42e346226575eae",
+    "treeSha": "dba940630fb559ab272e182573224216f728223a"
   },
   "packages": {
     "@thallylabs/core": "^0.2.20"
@@ -73,5 +73,11 @@
       "tsconfig.json",
       "vitest.config.ts"
     ]
+  },
+  "frameworkDependencies": {
+    "next": "16.4.6",
+    "react": "19.2.9",
+    "react-dom": "19.2.9",
+    "eslint-config-next": "16.4.6"
   }
 }
